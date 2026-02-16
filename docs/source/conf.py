@@ -16,9 +16,13 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
-    "myst_parser",
+    #"myst_parser",
+    "myst_nb",
     "sphinx_copybutton",
 ]
+
+nb_execution_mode = "off"
+
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]

@@ -40,7 +40,7 @@ def _write_api_root_index() -> None:
     None
     """
     idx = API_DIR / "index.rst"
-    txt = """Fast Lisa Subtraction API
+    txt = """Fast Lisa Subtraction
 =========================
 
 .. toctree::
