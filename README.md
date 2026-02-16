@@ -38,7 +38,7 @@ This package relies on:
 - [GBGPU](https://github.com/mikekatz04/GBGPU) to generate GB waveforms (both on CPU/GPU)
 - [CuPy](https://cupy.dev/) for the GPU acceleration
 
-which are *NOT* automatically installed. Please refer to the official documentations to install and match your own hardware. 
+which are *NOT* automatically installed. Please refer to their official documentations to install and match your own hardware. 
 
 *Note:* CuPy is not mandatory as the package is meant to work also on CPU-only machines, exploiting NumPy.
 
