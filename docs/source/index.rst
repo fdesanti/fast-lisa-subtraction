@@ -2,7 +2,7 @@ Fast Lisa Subtraction documentation
 ====================================================
 
 **Fast Lisa Subtraction** is a (CPU/GPU) accelerated version of the LISA `Subtraction algorithm <https://gitlab.in2p3.fr/Nikos/gwg>`_ 
-for the estimation of `Galactic foregrounds <https://arxiv.org/abs/2103.14598>`_ from unresolved sources in LISA.**
+for the estimation of `Galactic foregrounds <https://arxiv.org/abs/2103.14598>`_ from unresolved sources in LISA.
 
 
 .. toctree::
@@ -10,6 +10,7 @@ for the estimation of `Galactic foregrounds <https://arxiv.org/abs/2103.14598>`_
    :maxdepth: 1
 
    indexes/installation
+   indexes/simulating_catalogs
    indexes/subtraction_tutorial
 
 

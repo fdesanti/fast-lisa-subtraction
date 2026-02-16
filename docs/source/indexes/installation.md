@@ -1,6 +1,8 @@
 # Installation
 
-We recommend to create first a conda environment
+## Git
+
+We recommend first to create a conda environment
 
 ```
 conda create -n lisa_env python=3.11 -y
@@ -18,7 +20,7 @@ and install the `GSL` and `FFTW3` libraries
 conda install -c conda-forge gsl fftw -y
 ```
 
-You can then clone this repository and install it
+You can then clone the repository and install it
 
 ```
 git clone https://github.com/fdesanti/fast-lisa-subtraction.git
