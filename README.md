@@ -1,3 +1,5 @@
+![Test Status](https://img.shields.io/badge/Tests-Passed-brightgreen)
+
 # Fast Lisa Subtraction
 (GPU) Accelerated version of the [Subtraction Algorithm](https://gitlab.in2p3.fr/Nikos/gwg) for the estimation of the [Galactic Foreground](https://arxiv.org/abs/2103.14598) in LISA
 
