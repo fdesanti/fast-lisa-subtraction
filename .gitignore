@@ -1,0 +1,23 @@
+# File extensions
+*.pdf
+*.png
+*.hdf5
+*.out
+*.txt
+*.h5
+
+# Compiled files
+*.pyc
+*.DS_Store
+
+# Cached directories
+__pycache__/
+*.egg-info/
+docs/build/
+docs/source/api/
+docs/source/api/**/index.rst
+docs/source/api/**/[!i]*.rst
+data/
+
+# Jupyter Notebook
+.ipynb_checkpoints

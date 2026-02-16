@@ -1,0 +1,32 @@
+[build-system]
+requires      = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name        = "Fast-Lisa-Subtraction"
+version     = "0.1.0"
+description = "GPU accelerated implementation of Subtraction Algorithm for estimating the Galactic foreground in LISA"
+authors     = [
+    { name = "Federico De Santi", email = "f.desanti@campus.unimib.it" },
+    { name = "Nikolaos Karnesis" }
+]
+dependencies = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "h5py",
+    "torch",
+    "tqdm",
+    "tensordict",
+    "lisaconstants",
+    "lisa-data-challenge"
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+fast_lisa_subtraction = ["data/galaxy_sky_coord.h5"]
