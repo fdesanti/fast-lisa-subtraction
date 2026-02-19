@@ -148,7 +148,7 @@ class GalacticBinaryPopulation(MultivariatePrior):
 
         Returns
         -------
-        hyperion.core.TensorSamples
+        TensorSamples
             Samples drawn from the prior distribution.
         """
         num_samples = int(num_samples)

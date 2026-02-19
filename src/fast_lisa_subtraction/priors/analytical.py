@@ -949,7 +949,7 @@ class MultivariatePrior():
 
         Returns
         -------
-        hyperion.core.TensorSamples
+        TensorSamples
             Samples drawn from the prior.
         """
         samples = {prior.name: prior.sample(num_samples, standardize) for prior in self.priors}
