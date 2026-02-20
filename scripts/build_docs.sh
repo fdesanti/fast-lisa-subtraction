@@ -27,7 +27,7 @@ echo "==> Organizing API structure and indexes"
 python "$DOCS_DIR/generate_api_indexes.py"
 
 echo "==> Building HTML documentation"
-sphinx-build -b html "$DOCS_DIR/source" "$BUILD_DIR/html"
+sphinx-build --keep-going -b html "$DOCS_DIR/source" "$BUILD_DIR/html"
 
 echo "==> DONE ✅"
 echo "HTML available at: $BUILD_DIR/html/index.html"
