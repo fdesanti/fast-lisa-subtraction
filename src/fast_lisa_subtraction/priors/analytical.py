@@ -191,7 +191,7 @@ class Prior:
         num_samples : int
             Number of samples to draw.
         standardize : bool, optional
-            If True, return standardized samples.
+            Whether to standardize the samples to zero mean and unit variance (for training purposes). Default: False
 
         Returns
         -------
@@ -247,7 +247,7 @@ class Uniform(Prior):
         num_samples : int
             Number of samples to draw.
         standardize : bool, optional
-            If True, return standardized samples.
+            Whether to standardize the samples to zero mean and unit variance (for training purposes). Default: False
 
         Returns
         -------
@@ -301,7 +301,7 @@ class Gaussian(Prior):
         num_samples : int
             Number of samples to draw.
         standardize : bool, optional
-            If True, return standardized samples.
+            Whether to standardize the samples to zero mean and unit variance (for training purposes). Default: False
 
         Returns
         -------
@@ -359,7 +359,7 @@ class Cauchy(Prior):
         num_samples : int
             Number of samples to draw.
         standardize : bool, optional
-            If True, return standardized samples.
+            Whether to standardize the samples to zero mean and unit variance (for training purposes). Default: False
 
         Returns
         -------
@@ -495,7 +495,7 @@ class Gamma(Prior):
         num_samples : int
             Number of samples to draw.
         standardize : bool, optional
-            If True, return standardized samples.
+            Whether to standardize the samples to zero mean and unit variance (for training purposes). Default: False
 
         Returns
         -------
@@ -603,7 +603,7 @@ class LogNormal(Prior):
         num_samples : int
             Number of samples to draw.
         standardize : bool, optional
-            If True, return standardized samples.
+            Whether to standardize the samples to zero mean and unit variance (for training purposes). Default: False
 
         Returns
         -------
@@ -663,7 +663,7 @@ class UniformCosine(Prior):
         num_samples : int
             Number of samples to draw.
         standardize : bool, optional
-            If True, return standardized samples.
+            Whether to standardize the samples to zero mean and unit variance (for training purposes). Default: False
 
         Returns
         -------
@@ -730,7 +730,7 @@ class UniformSine(Prior):
         num_samples : int
             Number of samples to draw.
         standardize : bool, optional
-            If True, return standardized samples.
+            Whether to standardize the samples to zero mean and unit variance (for training purposes). Default: False
 
         Returns
         -------
@@ -945,7 +945,7 @@ class MultivariatePrior():
         num_samples : int
             Number of samples to draw.
         standardize : bool, optional
-            If True, return standardized samples.
+            Whether to standardize the samples to zero mean and unit variance (for training purposes). Default: False
 
         Returns
         -------
@@ -963,7 +963,7 @@ class MultivariatePrior():
         num_samples : int
             Number of samples to draw.
         standardize : bool, optional
-            If True, return standardized samples.
+            Whether to standardize the samples to zero mean and unit variance (for training purposes). Default: False
 
         Returns
         -------

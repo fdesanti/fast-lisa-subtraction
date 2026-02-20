@@ -3,7 +3,7 @@ import torch
 from .analytical import Gamma
 from torch.distributions import Normal, MultivariateNormal, StudentT, Exponential, Chi2
 
-__all__ = ['Copula']
+__all__ = ['Copula', 'Copula_']
 
 class Copula_:
     """Apply copulas to samples from marginal distributions."""

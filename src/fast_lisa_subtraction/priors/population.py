@@ -163,7 +163,7 @@ class PowerLaw(Prior):
         num_samples : int
             Number of samples to draw.
         standardize : bool, optional
-            If True, return standardized samples.
+            Whether to standardize the samples to zero mean and unit variance (for training purposes). Default: False
 
         Returns
         -------
@@ -424,7 +424,7 @@ class BrokenPowerLaw(Prior):
         num_samples : int
             Number of samples to draw.
         standardize : bool, optional
-            If True, return standardized samples.
+            Whether to standardize the samples to zero mean and unit variance (for training purposes). Default: False
 
         Returns
         -------
