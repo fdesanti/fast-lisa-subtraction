@@ -44,7 +44,7 @@ which are *NOT* automatically installed. Please refer to their official document
 
 ## Documentation
 
-The official documentation can be found [here](https:www.docs), while a usage example can be found in the `Examples` folder.
+The official documentation can be found [here](https://fdesanti.github.io/fast-lisa-subtraction), while a usage example can be found in the `Examples` folder.
 
 
 ## Acknowledgements
@@ -59,6 +59,6 @@ If you use `Fast Lisa Subtraction`, please cite the
   year         = {2026},
   eprint       = {26XX.XXXXX},
   archivePrefix= {arXiv},
-  primaryClass = {astro-ph.IM}
+  primaryClass = {astro-ph.HE}
 }
 ```
