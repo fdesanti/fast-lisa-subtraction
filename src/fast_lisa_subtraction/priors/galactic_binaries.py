@@ -130,7 +130,7 @@ class GalacticBinaryPopulation(MultivariatePrior):
         
         super().__init__(_prior)
 
-    def sample(self, num_samples, standardize=False, copula=False, **copula_kwargs):
+    def sample(self, num_samples, standardize=False, copula=True, **copula_kwargs):
         """Sample from the prior distribution.
 
         Parameters
@@ -138,7 +138,7 @@ class GalacticBinaryPopulation(MultivariatePrior):
         num_samples : int
             Number of samples to draw.
         standardize : bool, optional
-            Whether to standardize the samples.
+            Whether to standardize the samples to zero mean and unit variance (for training purposes).
         copula : bool, optional
             If True, draw correlated samples for frequency and frequency
             derivative using a copula.
@@ -161,7 +161,14 @@ class GalacticBinaryPopulation(MultivariatePrior):
     
         if copula:
             # Apply the Gaussian copula to the samples
-            f_dot, f = Copula(f_dot, f, **copula_kwargs)
+            # Default parameters
+            default_kwargs = {
+                "rho": 0.995,              
+                "kind": "gaussian"     
+            }
+            # User kwargs override defaults
+            copula_params = {**default_kwargs, **copula_kwargs}
+            f_dot, f = Copula(f_dot, f, **copula_params)
 
             # Update the samples with the new values
             samples['Frequency'] = f
