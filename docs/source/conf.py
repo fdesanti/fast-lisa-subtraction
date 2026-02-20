@@ -26,12 +26,12 @@ nb_execution_mode = "off"
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-# exclude_patterns += [
-#     "api/fast_lisa_subtraction.rst",
-#     "api/priors.rst",
-#     "api/simulation.rst",
-#     "api/utils.rst",
-# ]
+exclude_patterns += [
+    "api/fast_lisa_subtraction.rst",
+    "api/priors.rst",
+    "api/simulation.rst",
+    "api/utils.rst",
+]
 
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
