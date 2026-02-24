@@ -50,15 +50,16 @@ The official documentation can be found [here](https://fdesanti.github.io/fast-l
 ## Acknowledgements
 
 If you use `Fast Lisa Subtraction`, please cite the 
-[corresponding paper](arxiv.XXXX.XXXXX).
+[corresponding paper](https://arxiv.org/abs/2602.18560).
 
 ```bibtex
-@article{Desanti2026FastLISA,
-  author       = {De Santi, F. and Santini, A. and Toubiana, A. and Karnesis, N. and Gerosa, D.},
-  title        = {Inferring the population properties of galactic binaries from {LISA}'s stochastic foreground},
-  year         = {2026},
-  eprint       = {26XX.XXXXX},
-  archivePrefix= {arXiv},
-  primaryClass = {astro-ph.HE}
+@article{DeSanti:2026xhs,
+    author = "De Santi, Federico and Santini, Alessandro and Toubiana, Alexandre and Karnesis, Nikolaos and Gerosa, Davide",
+    title = "{Inferring the population properties of galactic binaries from LISA's stochastic foreground}",
+    eprint = "2602.18560",
+    archivePrefix = "arXiv",
+    primaryClass = "astro-ph.HE",
+    month = "2",
+    year = "2026"
 }
 ```
