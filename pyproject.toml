@@ -17,6 +17,7 @@ dependencies = [
     "h5py",
     "torch",
     "tqdm",
+    "corner",
     "tensordict",
     "lisaconstants",
     "lisa-data-challenge"
