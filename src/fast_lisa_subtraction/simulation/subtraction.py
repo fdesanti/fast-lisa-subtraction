@@ -366,7 +366,7 @@ class SubtractionAlgorithm(SourceCatalog):
 
     @latexify
     def icloop(self, batch_size=10_000, lisa_noise='SciRDv1', maxiter=10, snr_threshold=7, kappa=.15, tol=1e-3,
-               doplot=False, verbose=True, **psd_kwargs):
+               doplot=False, verbose=True, extra_galactic_sgwb=None, **psd_kwargs):
         """Iteratively subtract resolved sources from the data.
 
         Parameters
@@ -387,6 +387,8 @@ class SubtractionAlgorithm(SourceCatalog):
             If True, generate diagnostic plots.
         verbose : bool, optional
             If True, enable progress and status logging.
+        extra_galactic_sgwb : dict of numpy.ndarray or cupy.array , optional
+            Additional galactic stochastic gravitational wave background level to add to the PSD.
         **psd_kwargs : dict
             Additional parameters for PSD smoothing.
 
@@ -424,6 +426,15 @@ class SubtractionAlgorithm(SourceCatalog):
 
         # Get the noise for all frequencies in a dictionary
         noise = {ch: lisa_noise.psd(self.AET["f"], option=ch, tdi2=self.tdi2) for ch in ["A", "E", "T"]}
+
+        # Add extra galactic SGWB to the instrumental noise if provided
+        if extra_galactic_sgwb is not None:
+            self.extra_galactic_sgwb = extra_galactic_sgwb
+            for ch in ["A", "E", "T"]:
+                noise[ch] += extra_galactic_sgwb[ch]
+        if self.verbose:
+            logger.info(f"Added extra galactic SGWB to the instrumental noise")
+
         self.initial_noise = noise
 
         # Discard very under-threshold sources
@@ -566,7 +577,36 @@ class SubtractionAlgorithm(SourceCatalog):
         self.AET["Sconf"]          = {}
         for ch in ["A", "E", "T"]:
             self.AET["Sconf"][ch] = self.Sconf[ch].get() if self.use_gpu else self.Sconf[ch]
+        
+        if hasattr(self, "extra_galactic_sgwb"):
+            self.AET["extra_galactic_sgwb"] = {}
+            for ch in ["A", "E", "T"]:
+                self.AET["extra_galactic_sgwb"][ch] = self.extra_galactic_sgwb[ch].get() if self.use_gpu else self.extra_galactic_sgwb[ch]
     
+    def export_metadata_to_hdf5(self, output_path):
+        """Export the AET metadata to an HDF5 file.
+
+        Parameters
+        ----------
+        output_path : str or os.PathLike
+            Path to the output HDF5 file.
+
+        Returns
+        -------
+        None
+        """
+        with h5py.File(output_path, 'w') as f:
+            for key, value in self.AET.items():
+                if isinstance(value, dict):
+                    grp = f.create_group(key)
+                    for subkey, subvalue in value.items():
+                        grp.create_dataset(subkey, data=subvalue)
+                else:
+                    f.create_dataset(key, data=value)
+        if self.verbose:
+            logger.info(f"Metadata exported to {output_path}")
+
+
 
     def run(self, **run_kwargs):
         """Run the local subtraction algorithm (alias for ``icloop``).
