@@ -177,7 +177,7 @@ class SubtractionAlgorithm(SourceCatalog):
             axs[i].legend()
         
         figs.tight_layout()
-        figs.savefig(f'catalog_plots.pdf', bbox_inches='tight')
+        figs.savefig(f'{self.outdir}/catalog_plots.pdf', bbox_inches='tight')
         plt.close(figs)
         return figs
 
@@ -349,7 +349,7 @@ class SubtractionAlgorithm(SourceCatalog):
             self.fig_sub.axes[0].set_xlim(1e-5, 1e-1)
             self.fig_sub.axes[0].set_title(f"Subtracted sources")
             self.fig_sub.axes[0].legend(loc="upper left")
-            self.fig_sub.savefig("sub_sources.pdf", bbox_inches="tight")
+            self.fig_sub.savefig(f"{self.outdir}/sub_sources.pdf", bbox_inches="tight")
 
         if self.verbose:
             logger.info(f"Subtracted sources: {subtracted.sum()}")
@@ -366,7 +366,7 @@ class SubtractionAlgorithm(SourceCatalog):
 
     @latexify
     def icloop(self, batch_size=10_000, lisa_noise='SciRDv1', maxiter=10, snr_threshold=7, kappa=.15, tol=1e-3,
-               doplot=False, verbose=True, extra_galactic_sgwb=None, **psd_kwargs):
+               doplot=False, verbose=True, extra_galactic_sgwb=None, outdir=os.getcwd(), **psd_kwargs):
         """Iteratively subtract resolved sources from the data.
 
         Parameters
@@ -399,7 +399,8 @@ class SubtractionAlgorithm(SourceCatalog):
             and ``PSD`` is the final smoothed PSD.
         """
         self.verbose = verbose 
-        
+        self.outdir = outdir
+
         start = time.time()
        
         if self.verbose:
@@ -432,8 +433,8 @@ class SubtractionAlgorithm(SourceCatalog):
             self.extra_galactic_sgwb = extra_galactic_sgwb
             for ch in ["A", "E", "T"]:
                 noise[ch] += extra_galactic_sgwb[ch]
-        if self.verbose:
-            logger.info(f"Added extra galactic SGWB to the instrumental noise")
+            if self.verbose:
+                logger.info(f"Added extra galactic SGWB to the instrumental noise")
 
         self.initial_noise = noise
 
@@ -488,7 +489,7 @@ class SubtractionAlgorithm(SourceCatalog):
             self.fig_sum.axes[0].set_xlabel("$f$ [Hz]")
             self.fig_sum.axes[0].set_xlim(1e-5, 1e-1)
             self.fig_sum.axes[0].legend(loc="upper left")
-            self.fig_sum.savefig("sum_sources.pdf", bbox_inches="tight")
+            self.fig_sum.savefig(f"{self.outdir}/sum_sources.pdf", bbox_inches="tight")
 
         # Run the subtraction loop
         Num_subtracted = 0
@@ -511,7 +512,7 @@ class SubtractionAlgorithm(SourceCatalog):
                 S1plot = xp.absolute(S1["A"]).get() if self.use_gpu else xp.absolute(S1["A"])
                 fig.axes[0].loglog(fplot, S1plot, label=rf"$S_n$ (it=${it}$)")#, color=pp[0].get_color())
                 fig.axes[0].legend(loc="upper left")
-                fig.savefig(f"total_psd.pdf", bbox_inches="tight")
+                fig.savefig(f"{self.outdir}/total_psd.pdf", bbox_inches="tight")
                  
                 # Sum sources plot
                 aa = (2 * self.df * xp.absolute(self.AET["A"])).get() if self.use_gpu else 2 * self.df * xp.absolute(self.AET["A"])
@@ -522,7 +523,7 @@ class SubtractionAlgorithm(SourceCatalog):
                 self.fig_sum.axes[0].set_ylabel(r"$2\,\Delta f\,|\tilde{A}(f)|$")
                 self.fig_sum.axes[0].set_title(f"Total sources")
 
-                self.fig_sum.savefig(f"sum_sources.pdf", bbox_inches="tight")
+                self.fig_sum.savefig(f"{self.outdir}/sum_sources.pdf", bbox_inches="tight")
 
             # Check for convergence
             if((convergence(S0, S1, tol)) or
@@ -595,14 +596,27 @@ class SubtractionAlgorithm(SourceCatalog):
         -------
         None
         """
+        def to_numpy(value):
+            # convert CuPy arrays explicitly; NumPy arrays and scalars pass through
+            if self.use_gpu and isinstance(value, xp.ndarray):
+                return value.get()
+            return value
+
         with h5py.File(output_path, 'w') as f:
             for key, value in self.AET.items():
                 if isinstance(value, dict):
                     grp = f.create_group(key)
                     for subkey, subvalue in value.items():
-                        grp.create_dataset(subkey, data=subvalue)
+                        grp.create_dataset(subkey, data=to_numpy(subvalue))
+                elif isinstance(value, pd.DataFrame):
+                    grp = f.create_group(key)
+                    for col in value.columns:
+                        data = value[col].to_numpy()
+                        if data.dtype == object:
+                            data = data.astype('S')  # h5py cannot store object arrays
+                        grp.create_dataset(col, data=data)
                 else:
-                    f.create_dataset(key, data=value)
+                    f.create_dataset(key, data=to_numpy(value))
         if self.verbose:
             logger.info(f"Metadata exported to {output_path}")
 

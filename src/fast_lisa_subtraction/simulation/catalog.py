@@ -32,7 +32,7 @@ class SourceCatalog:
     **gbgpu_kwargs : dict
         Additional keyword arguments forwarded to :class:`gbgpu.gbgpu.GBGPU`.
     """
-    def __init__(self, catalog_path=None, catalog_df=None, use_gpu=True, verbose=True, **gbgpu_kwargs):
+    def __init__(self, catalog_path=None, catalog_df=None, use_gpu=True, verbose=True, cat_name=None, **gbgpu_kwargs):
         """Initialize the catalogue handler.
 
         Parameters
@@ -75,7 +75,7 @@ class SourceCatalog:
         else:
             assert isinstance(catalog_df, pd.DataFrame), "catalog_df should be a pandas DataFrame"
             self.cat_df = catalog_df
-            self.cat_name = 'GB_catalogue'
+            self.cat_name = 'GB_catalogue' if cat_name is None else cat_name
        
         #initialize the GBGPU class
         self.GB = GBGPU(use_gpu=self.use_gpu, **gbgpu_kwargs)
