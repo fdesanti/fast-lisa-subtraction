@@ -474,6 +474,10 @@ class SubtractionAlgorithm(SourceCatalog):
             Sn = np.absolute(noise["A"].get()) if self.use_gpu else xp.absolute(noise["A"])
             Sn_smooth = np.absolute(S0["A"].get()) if self.use_gpu else xp.absolute(S0["A"])
             fig.axes[0].loglog(fplot, Sn, "k--", label="noise")
+            if extra_galactic_sgwb is not None:
+                sgwb = xp.absolute(self.extra_galactic_sgwb["A"])
+                sgwb = sgwb.get() if self.use_gpu else sgwb
+                fig.axes[0].loglog(fplot, sgwb, "r-.", label="extra-galactic SGWB")
             fig.axes[0].loglog(fplot, Sn_smooth, label=r"$S_n$ (it=0)")
             fig.axes[0].legend(loc="upper left")
             fig.axes[0].set_xlabel("$f$ [Hz]")
