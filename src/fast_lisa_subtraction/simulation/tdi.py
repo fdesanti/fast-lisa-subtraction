@@ -15,6 +15,38 @@ pi = np.pi
 f_star = c/(2*pi*L) # Hz
 
 
+def response(f, channel):
+    r"""Compute the LISA TDI response :math:`\mathcal{R}(f)` for a channel.
+
+    Parameters
+    ----------
+    f : numpy.ndarray or torch.Tensor
+        Frequency array in Hz.
+    channel : str
+        TDI channel, one of ``"A"``, ``"E"``, or ``"T"``.
+
+    Returns
+    -------
+    numpy.ndarray or torch.Tensor
+        Dimensionless response :math:`16 \sin^2\omega \, \omega^2 \tilde{R}(\omega)`
+        with :math:`\omega = 2\pi f L/c`.
+    """
+
+    omega = 2*pi*f*L/c
+    sin_omega = torch.sin(omega) if isinstance(omega, torch.Tensor) else np.sin(omega)
+
+    if channel =="T":
+        R_tilde = 9/20 * (omega)**6 / (1.8*1e3+0.7*(omega)**8)
+
+    elif channel in ["A", "E"]:
+        R_tilde = 9/20 * 1 / (1 + 0.7 * (omega)**2)
+
+    else:
+        raise ValueError(f"Unknown channel '{channel}', must be one of 'A', 'E', 'T'")
+
+    return 16 * sin_omega**2 * (omega)**2 * R_tilde
+
+
 def Sn(f, Nx, channel):
     """Add the LISA response to a noise power spectral density.
 
@@ -33,17 +65,7 @@ def Sn(f, Nx, channel):
         Noise PSD including the LISA response.
     """
 
-    omega = 2*pi*f*L/c
-    sin_omega = torch.sin(omega) if isinstance(omega, torch.Tensor) else np.sin(omega)
-
-    #compute the response
-    if channel =="T":
-        R_tilde = 9/20 * (omega)**6 / (1.8*1e3+0.7*(omega)**8)
-
-    elif channel in ["A", "E"]:
-        R_tilde = 9/20 * 1 / (1 + 0.7 * (omega)**2)
-
-    return Nx / (16 * sin_omega**2*(omega)**2 * R_tilde)
+    return Nx / response(f, channel)
 
 def characteristic_strain(f, Nx, channel):
     r"""Compute the characteristic strain for a TDI channel.
@@ -81,7 +103,7 @@ def characteristic_strain(f, Nx, channel):
         return np.sqrt(f * Sn_ch)
 
 
-def psd_2_omega_gw(f, Sn):
+def psd_to_omega_gw(f, Sn):
     r"""
     Convert a PSD to :math:`\Omega_{\rm GW}`.
 
@@ -109,7 +131,51 @@ def psd_2_omega_gw(f, Sn):
 
     return 4*pi**2 * (f**3) * Sn / (3*(3.24*10**(-18))**2)
 
-def characteristic_strain_2_omega_gw(f, Sn):
+
+def omega_gw_to_psd(f, omega_gw, channel=None):
+    r"""
+    Convert :math:`\Omega_{\rm GW}` to a PSD, optionally in a given TDI channel.
+
+    Parameters
+    ----------
+    f : numpy.ndarray or torch.Tensor
+        Frequency array in Hz.
+    omega_gw : numpy.ndarray or torch.Tensor
+        Dimensionless :math:`\Omega_{\rm GW}`.
+    channel : str, optional
+        TDI channel, one of ``"A"``, ``"E"``, or ``"T"``. If given, the
+        strain PSD is multiplied by the LISA response so that the output
+        is the PSD as measured in that channel. If ``None``, the plain
+        strain PSD is returned.
+
+    Returns
+    -------
+    numpy.ndarray or torch.Tensor
+        PSD in ``1/Hz`` (channel PSD if ``channel`` is given).
+
+    Notes
+    -----
+    Inverse of :func:`psd_to_omega_gw`:
+
+    .. math::
+        S_h(f) = \frac{3 H_0^2 \, \Omega_{\rm GW}(f)}{4\pi^2 f^3},
+
+    with :math:`H_0 = 3.24\times 10^{-18}\,\mathrm{s^{-1}}`. For a TDI channel
+
+    .. math::
+        S_{\rm ch}(f) = S_h(f)\, \mathcal{R}_{\rm ch}(f),
+
+    where :math:`\mathcal{R}_{\rm ch}` is the channel response (see :func:`response`).
+    """
+
+    Sh = 3*(3.24e-18)**2 * omega_gw / (4*pi**2 * f**3)
+
+    if channel is not None:
+        Sh = Sh * response(f, channel)
+
+    return Sh
+
+def characteristic_strain_to_omega_gw(f, Sn):
     r"""
     Convert characteristic strain to :math:`\Omega_{\rm GW}`.
 

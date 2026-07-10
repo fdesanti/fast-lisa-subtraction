@@ -165,9 +165,9 @@ class SubtractionAlgorithm(SourceCatalog):
             bin_edges = np.logspace(np.log10(all_pos.min()), np.log10(all_pos.max()), 100)
 
             # Plot histograms 
-            axs[i].hist(orig_pos,  bins=bin_edges, density=False, alpha=0.5, label='All')
-            axs[i].hist(res_pos,   bins=bin_edges, density=False, alpha=0.5, label='Resolved')
-            axs[i].hist(unres_pos, bins=bin_edges, density=False, alpha=0.5, label='Unresolved')
+            axs[i].hist(orig_pos,  color='C0', bins=bin_edges, density=False, alpha=0.5, label='All')
+            axs[i].hist(res_pos,   color='C2', bins=bin_edges, density=False, alpha=0.5, label='Resolved')
+            axs[i].hist(unres_pos, color='C3', bins=bin_edges, density=False, alpha=0.5, label='Unresolved')
 
             axs[i].set_yscale('log')   # log y-axis
             axs[i].set_xscale('log')   # log x-axis
