@@ -428,11 +428,15 @@ class SubtractionAlgorithm(SourceCatalog):
         # Get the noise for all frequencies in a dictionary
         noise = {ch: lisa_noise.psd(self.AET["f"], option=ch, tdi2=self.tdi2) for ch in ["A", "E", "T"]}
 
+        # Keep the purely instrumental noise for plotting; the subtraction itself
+        # uses the effective noise = instrumental + extra-galactic SGWB
+        self.instrumental_noise = {ch: noise[ch].copy() for ch in ["A", "E", "T"]}
+
         # Add extra galactic SGWB to the instrumental noise if provided
         if extra_galactic_sgwb is not None:
-            self.extra_galactic_sgwb = extra_galactic_sgwb
+            self.extra_galactic_sgwb = {ch: xp.array(extra_galactic_sgwb[ch]) for ch in ["A", "E", "T"]}
             for ch in ["A", "E", "T"]:
-                noise[ch] += extra_galactic_sgwb[ch]
+                noise[ch] += self.extra_galactic_sgwb[ch]
             if self.verbose:
                 logger.info(f"Added extra galactic SGWB to the instrumental noise")
 
@@ -471,9 +475,9 @@ class SubtractionAlgorithm(SourceCatalog):
             fig = plt.figure(figsize=(12,10))
             fig.add_subplot(111)
             fplot =  self.f.get() if self.use_gpu else self.f 
-            Sn = np.absolute(noise["A"].get()) if self.use_gpu else xp.absolute(noise["A"])
+            Sn_inst = np.absolute(self.instrumental_noise["A"].get()) if self.use_gpu else xp.absolute(self.instrumental_noise["A"])
             Sn_smooth = np.absolute(S0["A"].get()) if self.use_gpu else xp.absolute(S0["A"])
-            fig.axes[0].loglog(fplot, Sn, "k--", label="noise")
+            fig.axes[0].loglog(fplot, Sn_inst, "k--", label="instrumental noise")
             if extra_galactic_sgwb is not None:
                 sgwb = xp.absolute(self.extra_galactic_sgwb["A"])
                 sgwb = sgwb.get() if self.use_gpu else sgwb

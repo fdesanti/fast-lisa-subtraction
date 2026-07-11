@@ -15,7 +15,7 @@ pi = np.pi
 f_star = c/(2*pi*L) # Hz
 
 
-def response(f, channel):
+def response(f, channel, tdi2=True):
     r"""Compute the LISA TDI response :math:`\mathcal{R}(f)` for a channel.
 
     Parameters
@@ -35,6 +35,12 @@ def response(f, channel):
     omega = 2*pi*f*L/c
     sin_omega = torch.sin(omega) if isinstance(omega, torch.Tensor) else np.sin(omega)
 
+    if tdi2:
+        sin_2omega = torch.sin(2*omega) if isinstance(omega, torch.Tensor) else np.sin(2*omega)
+        tdi_factor = 4 * sin_2omega**2
+    else:
+        tdi_factor = 1.0
+
     if channel =="T":
         R_tilde = 9/20 * (omega)**6 / (1.8*1e3+0.7*(omega)**8)
 
@@ -44,10 +50,10 @@ def response(f, channel):
     else:
         raise ValueError(f"Unknown channel '{channel}', must be one of 'A', 'E', 'T'")
 
-    return 16 * sin_omega**2 * (omega)**2 * R_tilde
+    return 16 * sin_omega**2 * (omega)**2 * R_tilde * tdi_factor
 
 
-def Sn(f, Nx, channel):
+def Sn(f, Nx, channel, tdi2=True):
     """Add the LISA response to a noise power spectral density.
 
     Parameters
@@ -65,9 +71,9 @@ def Sn(f, Nx, channel):
         Noise PSD including the LISA response.
     """
 
-    return Nx / response(f, channel)
+    return Nx / response(f, channel, tdi2=tdi2)
 
-def characteristic_strain(f, Nx, channel):
+def characteristic_strain(f, Nx, channel, tdi2=True):
     r"""Compute the characteristic strain for a TDI channel.
 
     Parameters
@@ -95,7 +101,7 @@ def characteristic_strain(f, Nx, channel):
     """
 
     #compute the noise power spectral density with the LISA response
-    Sn_ch = Sn(f, Nx, channel)
+    Sn_ch = Sn(f, Nx, channel, tdi2=tdi2)
     
     if isinstance(Sn_ch, torch.Tensor):
         return torch.sqrt(f * Sn_ch)
@@ -132,7 +138,7 @@ def psd_to_omega_gw(f, Sn):
     return 4*pi**2 * (f**3) * Sn / (3*(3.24*10**(-18))**2)
 
 
-def omega_gw_to_psd(f, omega_gw, channel=None):
+def omega_gw_to_psd(f, omega_gw, channel=None, tdi2=True):
     r"""
     Convert :math:`\Omega_{\rm GW}` to a PSD, optionally in a given TDI channel.
 
@@ -171,7 +177,7 @@ def omega_gw_to_psd(f, omega_gw, channel=None):
     Sh = 3*(3.24e-18)**2 * omega_gw / (4*pi**2 * f**3)
 
     if channel is not None:
-        Sh = Sh * response(f, channel)
+        Sh = Sh * response(f, channel, tdi2=tdi2)
 
     return Sh
 
