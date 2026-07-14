@@ -24,7 +24,7 @@ OUTFILE = os.path.join(os.path.dirname(__file__), "..", "src", "fast_lisa_subtra
 #log-spaced at low frequency (where the antenna power is smooth) and
 #linearly spaced above 10 mHz to resolve the ~c/(4L) = 30 mHz oscillations
 f_low = np.logspace(-8, -2, 200, endpoint=False)
-f_high = np.arange(1e-2, 2.0, 4e-4)
+f_high = np.arange(1e-2, 1.0, 1e-4)
 freqs = np.concatenate([f_low, f_high])
 print(f"Calculating sky-averaged antenna power for {len(freqs)} frequencies from {freqs[0]:.1e} Hz to {freqs[-1]:.1e} Hz")
 
