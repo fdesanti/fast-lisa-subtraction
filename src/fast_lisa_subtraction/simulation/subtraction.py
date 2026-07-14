@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from ..utils import latexify
 from ..utils import log as logger
 from .catalog import SourceCatalog
+from .tdi import aet_to_xyz
 
 from tqdm import tqdm
 from ldc.lisa.noise import get_noise_model
@@ -366,7 +367,7 @@ class SubtractionAlgorithm(SourceCatalog):
 
     @latexify
     def icloop(self, batch_size=10_000, lisa_noise='SciRDv1', maxiter=10, snr_threshold=7, kappa=.15, tol=1e-3,
-               doplot=False, verbose=True, extra_galactic_sgwb=None, outdir=os.getcwd(), **psd_kwargs):
+               doplot=False, verbose=True, extra_galactic_sgwb=None, outdir=os.getcwd(), save_xyz=False, **psd_kwargs):
         """Iteratively subtract resolved sources from the data.
 
         Parameters
@@ -389,6 +390,10 @@ class SubtractionAlgorithm(SourceCatalog):
             If True, enable progress and status logging.
         extra_galactic_sgwb : dict of numpy.ndarray or cupy.array , optional
             Additional galactic stochastic gravitational wave background level to add to the PSD.
+        save_xyz : bool, optional
+            If True, also store the X, Y, Z Michelson channels (converted from
+            the subtracted A, E, T data with :func:`~fast_lisa_subtraction.simulation.tdi.aet_to_xyz`)
+            in the output metadata.
         **psd_kwargs : dict
             Additional parameters for PSD smoothing.
 
@@ -558,7 +563,7 @@ class SubtractionAlgorithm(SourceCatalog):
         self.unresolved_cat = pd.concat([self.unresolved_cat, self.cat], ignore_index=True)
 
         #update the metadata
-        self.update_metadata()
+        self.update_metadata(save_xyz=save_xyz)
 
         if doplot:
             cat_figs = self.plot_catalogues()
@@ -567,8 +572,14 @@ class SubtractionAlgorithm(SourceCatalog):
         
         return self.AET, S1
     
-    def update_metadata(self):
+    def update_metadata(self, save_xyz=False):
         """Update the AET metadata after subtraction.
+
+        Parameters
+        ----------
+        save_xyz : bool, optional
+            If True, convert the subtracted A, E, T data to the X, Y, Z
+            Michelson channels and store them in the metadata.
 
         Returns
         -------
@@ -591,6 +602,12 @@ class SubtractionAlgorithm(SourceCatalog):
             self.AET["extra_galactic_sgwb"] = {}
             for ch in ["A", "E", "T"]:
                 self.AET["extra_galactic_sgwb"][ch] = self.extra_galactic_sgwb[ch].get() if self.use_gpu else self.extra_galactic_sgwb[ch]
+
+        #optionally store the subtracted data in the X, Y, Z Michelson channels
+        if save_xyz:
+            self.AET["X"], self.AET["Y"], self.AET["Z"] = aet_to_xyz(self.AET["A"], self.AET["E"], self.AET["T"])
+            if hasattr(self.extra_galactic_sgwb):
+                self.AET["extra_galactic_sgwb"]["X"], self.AET["extra_galactic_sgwb"]["Y"], self.AET["extra_galactic_sgwb"]["Z"] = aet_to_xyz(self.extra_galactic_sgwb["A"], self.extra_galactic_sgwb["E"], self.extra_galactic_sgwb["T"])
     
     def export_metadata_to_hdf5(self, output_path):
         """Export the AET metadata to an HDF5 file.

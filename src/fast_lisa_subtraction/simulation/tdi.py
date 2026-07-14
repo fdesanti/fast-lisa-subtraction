@@ -12,6 +12,32 @@ from .response import (L, c, pm, fm, pi, f_star,
                        response, sky_averaged_antenna_power)
 
 
+def aet_to_xyz(A, E, T):
+    r"""Convert TDI A, E, T data to the X, Y, Z Michelson channels.
+
+    Inverse of the (noise-orthogonal) combination
+
+    .. math::
+        A = \frac{Z - X}{\sqrt{2}}, \quad
+        E = \frac{X - 2Y + Z}{\sqrt{6}}, \quad
+        T = \frac{X + Y + Z}{\sqrt{3}}.
+
+    Parameters
+    ----------
+    A, E, T : array-like
+        TDI A, E, T data (numpy, cupy or torch arrays).
+
+    Returns
+    -------
+    tuple
+        ``(X, Y, Z)`` arrays of the same type as the inputs.
+    """
+    X = T/np.sqrt(3) - A/np.sqrt(2) + E/np.sqrt(6)
+    Y = T/np.sqrt(3) - 2*E/np.sqrt(6)
+    Z = T/np.sqrt(3) + A/np.sqrt(2) + E/np.sqrt(6)
+    return X, Y, Z
+
+
 def Sn(f, Nx, channel, tdi2=True, method="numerical", **response_kwargs):
     """Add the LISA response to a noise power spectral density.
 
