@@ -5,55 +5,14 @@ We follow Eqs. in Sec 2.3 of arXiv:2009.11845
 
 import torch
 import numpy as np
+from astropy import units as u
+from astropy.cosmology import Planck15 as cosmo
 
-#define constants
-L = 2.5*1e9 #m  LISA arm length
-c = 3*1e8   #m/s
-pm = 1e-12  #m
-fm = 1e-15  #m
-pi = np.pi
-f_star = c/(2*pi*L) # Hz
+from .response import (L, c, pm, fm, pi, f_star,
+                       response, sky_averaged_antenna_power)
 
 
-def response(f, channel, tdi2=True):
-    r"""Compute the LISA TDI response :math:`\mathcal{R}(f)` for a channel.
-
-    Parameters
-    ----------
-    f : numpy.ndarray or torch.Tensor
-        Frequency array in Hz.
-    channel : str
-        TDI channel, one of ``"A"``, ``"E"``, or ``"T"``.
-
-    Returns
-    -------
-    numpy.ndarray or torch.Tensor
-        Dimensionless response :math:`16 \sin^2\omega \, \omega^2 \tilde{R}(\omega)`
-        with :math:`\omega = 2\pi f L/c`.
-    """
-
-    omega = 2*pi*f*L/c
-    sin_omega = torch.sin(omega) if isinstance(omega, torch.Tensor) else np.sin(omega)
-
-    if tdi2:
-        sin_2omega = torch.sin(2*omega) if isinstance(omega, torch.Tensor) else np.sin(2*omega)
-        tdi_factor = 4 * sin_2omega**2
-    else:
-        tdi_factor = 1.0
-
-    if channel =="T":
-        R_tilde = 9/20 * (omega)**6 / (1.8*1e3+0.7*(omega)**8)
-
-    elif channel in ["A", "E"]:
-        R_tilde = 9/20 * 1 / (1 + 0.7 * (omega)**2)
-
-    else:
-        raise ValueError(f"Unknown channel '{channel}', must be one of 'A', 'E', 'T'")
-
-    return 16 * sin_omega**2 * (omega)**2 * R_tilde * tdi_factor
-
-
-def Sn(f, Nx, channel, tdi2=True):
+def Sn(f, Nx, channel, tdi2=True, method="numerical", **response_kwargs):
     """Add the LISA response to a noise power spectral density.
 
     Parameters
@@ -64,6 +23,12 @@ def Sn(f, Nx, channel, tdi2=True):
         Noise PSD in ``m^2/Hz`` for the specified channel.
     channel : str
         TDI channel, one of ``"A"``, ``"E"``, or ``"T"``.
+    method : str, optional
+        Response computation method, ``"analytic"`` or ``"numerical"``
+        (see :func:`response`).
+    **response_kwargs
+        Extra options forwarded to :func:`response` (e.g. ``from_file``,
+        ``integrator``, ``t``, ``n_beta``, ``n_lambda``).
 
     Returns
     -------
@@ -71,9 +36,9 @@ def Sn(f, Nx, channel, tdi2=True):
         Noise PSD including the LISA response.
     """
 
-    return Nx / response(f, channel, tdi2=tdi2)
+    return Nx / response(f, channel, tdi2=tdi2, method=method, **response_kwargs)
 
-def characteristic_strain(f, Nx, channel, tdi2=True):
+def characteristic_strain(f, Nx, channel, tdi2=True, method="numerical", **response_kwargs):
     r"""Compute the characteristic strain for a TDI channel.
 
     Parameters
@@ -84,6 +49,12 @@ def characteristic_strain(f, Nx, channel, tdi2=True):
         Noise PSD in ``m^2/Hz`` for the specified channel.
     channel : str
         TDI channel, one of ``"A"``, ``"E"``, or ``"T"``.
+    method : str, optional
+        Response computation method, ``"analytic"`` or ``"numerical"``
+        (see :func:`response`).
+    **response_kwargs
+        Extra options forwarded to :func:`response` (e.g. ``from_file``,
+        ``integrator``, ``t``, ``n_beta``, ``n_lambda``).
 
     Returns
     -------
@@ -101,7 +72,7 @@ def characteristic_strain(f, Nx, channel, tdi2=True):
     """
 
     #compute the noise power spectral density with the LISA response
-    Sn_ch = Sn(f, Nx, channel, tdi2=tdi2)
+    Sn_ch = Sn(f, Nx, channel, tdi2=tdi2, method=method, **response_kwargs)
     
     if isinstance(Sn_ch, torch.Tensor):
         return torch.sqrt(f * Sn_ch)
@@ -138,7 +109,7 @@ def psd_to_omega_gw(f, Sn):
     return 4*pi**2 * (f**3) * Sn / (3*(3.24*10**(-18))**2)
 
 
-def omega_gw_to_psd(f, omega_gw, channel=None, tdi2=True):
+def omega_gw_to_psd(f, omega_gw, channel=None, tdi2=True, cosmology=cosmo, method="numerical", **response_kwargs):
     r"""
     Convert :math:`\Omega_{\rm GW}` to a PSD, optionally in a given TDI channel.
 
@@ -153,6 +124,16 @@ def omega_gw_to_psd(f, omega_gw, channel=None, tdi2=True):
         strain PSD is multiplied by the LISA response so that the output
         is the PSD as measured in that channel. If ``None``, the plain
         strain PSD is returned.
+    tdi2 : bool, optional
+        If ``True``, use TDI 2.0 response; if ``False`, use TDI 1.5 response. Default is ``True``.
+    cosmology : astropy.cosmology instance, optional
+        Cosmology to use for the Hubble constant. Default is ``Planck15``.
+    method : str, optional
+        Response computation method, ``"analytic"`` or ``"numerical"``
+        (see :func:`response`).
+    **response_kwargs
+        Extra options forwarded to :func:`response` (e.g. ``from_file``,
+        ``integrator``, ``t``, ``n_beta``, ``n_lambda``).
 
     Returns
     -------
@@ -173,15 +154,18 @@ def omega_gw_to_psd(f, omega_gw, channel=None, tdi2=True):
 
     where :math:`\mathcal{R}_{\rm ch}` is the channel response (see :func:`response`).
     """
+    
+    H0 = cosmo.H0.to(1/u.s).value  # Hubble constant in km/s/M
 
-    Sh = 3*(3.24e-18)**2 * omega_gw / (4*pi**2 * f**3)
+    #Sh = 3*(3.24e-18)**2 * omega_gw / (4*pi**2 * f**3)
+    Sh = 3*(H0)**2 * omega_gw / (4*pi**2 * f**3)
 
     if channel is not None:
-        Sh = Sh * response(f, channel, tdi2=tdi2)
+        Sh = Sh * response(f, channel, tdi2=tdi2, method=method, **response_kwargs)
 
     return Sh
 
-def characteristic_strain_to_omega_gw(f, Sn):
+def characteristic_strain_to_omega_gw(f, Sn, cosmology=cosmo):
     r"""
     Convert characteristic strain to :math:`\Omega_{\rm GW}`.
 
@@ -191,6 +175,8 @@ def characteristic_strain_to_omega_gw(f, Sn):
         Frequency array in Hz.
     Sn : numpy.ndarray or torch.Tensor
         Characteristic strain in ``1/sqrt(Hz)``.
+    cosmology : astropy.cosmology instance, optional
+        Cosmology to use for the Hubble constant. Default is ``Planck15``.
 
     Returns
     -------
@@ -211,8 +197,11 @@ def characteristic_strain_to_omega_gw(f, Sn):
 
     with :math:`H_0 = 3.24\times 10^{-18}\,\mathrm{s^{-1}}`.
     """
+
+    H0 = cosmology.H0.to(1/u.s).value  # Hubble constant in km/s/Mpc
+
     Sn = Sn**2 / f  # Convert characteristic strain to noise power spectral density
-    return 4*pi**2 * (f**3) * Sn / (3*(3.24e-18)**2)
+    return 4*pi**2 * (f**3) * Sn / (3*(H0**2)**2)
 
 
 def coarse(f, Si):
