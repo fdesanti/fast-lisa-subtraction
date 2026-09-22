@@ -171,9 +171,9 @@ class GalacticBinaryPopulation(MultivariatePrior):
             f_dot, f = Copula(f_dot, f, **copula_params)
 
             # Update the samples with the new values
-            samples['Frequency'] = f
-            samples['FrequencyDerivative'] = 10**f_dot
-
+            
+        samples['Frequency'] = f
+        samples['FrequencyDerivative'] = 10**f_dot
         samples['Amplitude'] = 10**amp*f**(2/3)
         
         return samples
