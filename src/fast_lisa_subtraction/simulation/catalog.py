@@ -7,14 +7,22 @@ from tqdm import tqdm
 from lisaconstants import SIDEREALYEAR_J2000DAY
 from ldc.lisa.noise import get_noise_model
 
-from ..utils import read_catalog, log
+from ..utils import read_catalog, log, repair_cupy_runtime
 
 YEAR = SIDEREALYEAR_J2000DAY*24*60*60
 
+#importing gbgpu makes lisatools select a backend, which needs an intact cupy.cuda.runtime
+repair_cupy_runtime()
+
 try:
     from gbgpu.gbgpu import GBGPU
-except ImportError:
-    log.warning("GBGPU is not installed. Please install gbgpu to use SourceCatalog.")
+except ImportError as e:
+    GBGPU = None
+    log.warning(f"GBGPU could not be imported ({e}). Please install gbgpu to use SourceCatalog.")
+
+#imported after gbgpu, so that gbgpu registers its backends before lisatools does
+#(otherwise a plain GBGPU() created by the user can pick a lisatools backend)
+from .gbgpu_compatibility import build_gbgpu
 
 class SourceCatalog:
     """Generate GW waveforms from a Galactic binary catalogue.
@@ -42,30 +50,29 @@ class SourceCatalog:
         catalog_df : pandas.DataFrame, optional
             In-memory catalogue. If provided, ``catalog_path`` is ignored.
         use_gpu : bool, optional
-            If True, attempt to use CuPy for GPU acceleration.
+            If True, attempt to use CuPy for GPU acceleration. With gbgpu >= 1.2, if no
+            CUDA backend of GBGPU can be loaded, a warning is logged and the CPU is used
+            instead. The device actually in use is stored in ``self.use_gpu``.
         verbose : bool, optional
             If True, enable progress and status logging.
         **gbgpu_kwargs : dict
-            Additional arguments forwarded to :class:`gbgpu.gbgpu.GBGPU`.
+            Additional arguments forwarded to :class:`gbgpu.gbgpu.GBGPU`. With
+            gbgpu >= 1.2 an explicit ``force_backend`` (e.g. ``'cuda12x'``, ``'cpu'``)
+            overrides ``use_gpu``. If ``orbits`` is not given, orbits on the same
+            device as GBGPU are created.
         """
+        global xp
         self.verbose = verbose 
         #setting device for the simulation
         if use_gpu:
-            global xp
             try:
-                import cupy as xp
-                if verbose: log.info("Cupy is available: using the GPU")
+                import cupy  # noqa: F401
             except ImportError:
-                import numpy as xp
                 use_gpu = False
                 log.warning("Cupy NOT available: using the CPU")
         else:
-            import numpy as xp
             use_gpu = False
-            log.info("Using the CPU")
 
-        self.use_gpu = use_gpu
-            
         #read the catalogue
         if catalog_df is None:
             self.cat_path = catalog_path
@@ -77,8 +84,19 @@ class SourceCatalog:
             self.cat_df = catalog_df
             self.cat_name = 'GB_catalogue'
        
-        #initialize the GBGPU class
-        self.GB = GBGPU(use_gpu=self.use_gpu, **gbgpu_kwargs)
+        #initialize the GBGPU class (gbgpu 1.1.x or >= 1.2), with the orbits on the same device
+        if GBGPU is None:
+            raise ImportError("GBGPU is not installed. Please install gbgpu to use SourceCatalog.")
+        self.GB = build_gbgpu(GBGPU, use_gpu, **gbgpu_kwargs)
+
+        #follow the device GBGPU actually runs on (it may have fallen back to the CPU)
+        self.use_gpu = getattr(self.GB.xp, "__name__", "") == "cupy"
+        if self.use_gpu:
+            import cupy as xp
+            if verbose: log.info("Cupy is available: using the GPU")
+        else:
+            import numpy as xp
+            log.info("Using the CPU")
 
     @property
     def Nbinaries(self):
