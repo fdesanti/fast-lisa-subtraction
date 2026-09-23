@@ -10,25 +10,32 @@ Install the package with pip from this repository, in a **new** environment with
 (e.g. `python3 -m venv ~/envs/lisa && source ~/envs/lisa/bin/activate`).
 
 > [!IMPORTANT]
-> **Install the right PyTorch build first.** pip cannot choose the PyTorch build for you, and the
+> **Install the right PyTorch build first.**
+>
+> the
 > default `pip install torch` from PyPI is built for CUDA 13. The GPU backends of GBGPU and
-> LISA Analysis Tools only exist for CUDA 12 and refuse to load next to CUDA 13. Install PyTorch
-> **before** the package, with the command for your setup below: pip then keeps it.
+> LISA Analysis Tools only exist for CUDA 12 and are incompatible with CUDA 13. Install PyTorch
+> **before** the package, with the command for your setup below. 
+>
+> Refer to the official [PyTorch](https://pytorch.org/get-started/locally/) page for more details.
 
 ### Quick installation
 
+**CPU** only
 ```bash
-# CPU only
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install "fast-lisa-subtraction @ git+https://github.com/fdesanti/fast-lisa-subtraction.git"
+```
 
-# GPU with CUDA 12
+**GPU** `[cuda12]`
+
+```bash
 pip install "torch==2.14.0+cu126" --index-url https://download.pytorch.org/whl/cu126
 pip install "fast-lisa-subtraction[cuda12] @ git+https://github.com/fdesanti/fast-lisa-subtraction.git"
 ```
 
 The `[cuda12]` extra adds the GPU backends: `cupy-cuda12x`, `gbgpu-cuda12x` and
-`lisaanalysistools-cuda12x`. 
+`lisaanalysistools-cuda12x`. The GPU installation works with the CPU as well
 
 To install from a local clone instead, install PyTorch as above and then run:
 
