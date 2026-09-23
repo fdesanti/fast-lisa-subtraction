@@ -3,6 +3,10 @@
 # Fast Lisa Subtraction
 (GPU) Accelerated version of the [Subtraction Algorithm](https://gitlab.in2p3.fr/Nikos/gwg) for the estimation of the [Galactic Foreground](https://arxiv.org/abs/2103.14598) in LISA
 
+## Documentation
+
+The official documentation can be found [here](https://fdesanti.github.io/fast-lisa-subtraction), while a usage example can be found in the `Examples` folder.
+
 
 ## Installation
 
@@ -93,9 +97,6 @@ The other dependencies, including [GBGPU](https://github.com/mikekatz04/GBGPU),
   `pip install` of the package.
 
 
-## Documentation
-
-The official documentation can be found [here](https://fdesanti.github.io/fast-lisa-subtraction), while a usage example can be found in the `Examples` folder.
 
 
 ## Acknowledgements
