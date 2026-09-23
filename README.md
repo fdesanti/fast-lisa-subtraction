@@ -35,7 +35,9 @@ pip install "fast-lisa-subtraction[cuda12] @ git+https://github.com/fdesanti/fas
 ```
 
 The `[cuda12]` extra adds the GPU backends: `cupy-cuda12x`, `gbgpu-cuda12x` and
-`lisaanalysistools-cuda12x`. The GPU installation works with the CPU as well
+`lisaanalysistools-cuda12x`. 
+
+*Note: The GPU installation works with the CPU as well.*
 
 To install from a local clone instead, install PyTorch as above and then run:
 
