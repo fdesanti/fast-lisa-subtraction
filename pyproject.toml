@@ -6,21 +6,45 @@ build-backend = "setuptools.build_meta"
 name        = "Fast-Lisa-Subtraction"
 version     = "0.1.0"
 description = "GPU accelerated implementation of Subtraction Algorithm for estimating the Galactic foreground in LISA"
+requires-python = ">=3.10"
 authors     = [
     { name = "Federico De Santi", email = "f.desanti@campus.unimib.it" },
     { name = "Nikolaos Karnesis" }
 ]
+# NOTE: "torch" is left unpinned on purpose. Install a CUDA 12 build of torch first
+# (see gpu_installation.md): pip keeps an already-installed torch, whereas the default
+# PyPI wheel brings CUDA 13 libraries that stop the *-cuda12x GPU backends from loading.
+#
+# lisaanalysistools 1.2.8 is excluded because its CPU backend was compiled with
+# -march=native on an AVX-512 CI runner and crashes with SIGILL (Illegal instruction)
+# on CPUs without AVX-512 (e.g. Intel 12th-14th gen Core). 1.2.4 has the same problem,
+# 1.2.6 and 1.2.7 are fine (the Python code of 1.2.7 and 1.2.8 is identical).
+#
+# gbgpu 1.2.0-1.2.2 are excluded because they use their own backend registry instead of
+# gpubackendtools, which gbgpu_compat.py relies on (1.1.x and >= 1.2.4 are supported).
 dependencies = [
     "numpy",
     "scipy",
     "pandas",
     "h5py",
+    "matplotlib",
     "torch",
     "tqdm",
     "corner",
     "tensordict",
     "lisaconstants",
-    "lisa-data-challenge"
+    "lisa-data-challenge",
+    "gbgpu>=1.1,!=1.2.0,!=1.2.1,!=1.2.2",
+    "lisaanalysistools>=1.2.6,!=1.2.8",
+    "gpubackendtools",
+]
+
+[project.optional-dependencies]
+# GPU backends for CUDA 12 (pip install -e ".[cuda12]")
+cuda12 = [
+    "cupy-cuda12x",
+    "gbgpu-cuda12x>=1.2.4",
+    "lisaanalysistools-cuda12x>=1.2.6,!=1.2.8",
 ]
 
 [tool.setuptools]

@@ -1,3 +1,4 @@
+import sys
 import torch
 import random
 import numpy as np
@@ -55,3 +56,24 @@ def set_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     log.info(f"Setting random seed to {seed}")
+
+def repair_cupy_runtime():
+    """Undo the shadowing of ``cupy.cuda.runtime`` caused by some imports.
+
+    ``gbgpu.utils.utility`` (gbgpu 1.1.x and 1.2.x) runs
+    ``from cupy.cuda.runtime import setDevice``. That import replaces ``cupy.cuda.runtime``
+    with CuPy's re-export module, which does not include the private
+    ``_getLocalRuntimeVersion``, so ``cupy.cuda.get_local_runtime_version()`` then raises
+    ``AttributeError``. ``gpubackendtools`` calls it before loading any CUDA backend and
+    does not catch that error. This puts the missing function back.
+
+    Does nothing if CuPy is not imported or the module is intact.
+    """
+    shim = sys.modules.get("cupy.cuda.runtime")
+    if shim is None or hasattr(shim, "_getLocalRuntimeVersion"):
+        return
+    try:
+        from cupy_backends.cuda.api import runtime as _runtime
+        shim._getLocalRuntimeVersion = _runtime._getLocalRuntimeVersion
+    except (ImportError, AttributeError):
+        pass
